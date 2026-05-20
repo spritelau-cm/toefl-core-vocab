@@ -10,17 +10,17 @@
     <meta name="apple-mobile-web-app-title" content="托福词汇" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <title>托福核心词汇</title>
-    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="manifest" href="./manifest.webmanifest?v=3000" />
     <link rel="icon" href="./icons/icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
-    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./styles.css?v=3000" />
   </head>
   <body>
     <main class="app-shell">
       <header class="topbar">
         <div>
-          <p class="eyebrow">TOEFL Core</p>
-          <h1>托福核心词汇</h1>
+          <p class="eyebrow">TOEFL Core 3000+</p>
+          <h1>托福核心词汇 3000+</h1>
         </div>
         <section class="stats" aria-label="学习统计">
           <div>
@@ -93,8 +93,8 @@
                 <span id="progressPercent">0%</span>
               </div>
               <div>
-                <h2>今日队列</h2>
-                <p id="queueText">100 个词待学习</p>
+                <h2>滚动队列</h2>
+                <p id="queueText">3000+ 个词待学习</p>
               </div>
             </div>
             <div class="mini-map" aria-hidden="true">
@@ -144,6 +144,7 @@
       </section>
     </main>
 
-    <script src="./app.js"></script>
+    <script src="./vocabulary.js?v=3000"></script>
+    <script src="./app.js?v=3000"></script>
   </body>
 </html>

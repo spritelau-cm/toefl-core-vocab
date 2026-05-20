@@ -1,10 +1,15 @@
-const cacheName = "toefl-core-v4";
+const cacheName = "toefl-core-v5";
 const assets = [
   "./",
   "./index.html",
   "./styles.css",
+  "./styles.css?v=3000",
+  "./vocabulary.js",
+  "./vocabulary.js?v=3000",
   "./app.js",
+  "./app.js?v=3000",
   "./manifest.webmanifest",
+  "./manifest.webmanifest?v=3000",
   "./icons/icon.svg",
   "./icons/apple-touch-icon.png",
   "./icons/icon-192.png",
