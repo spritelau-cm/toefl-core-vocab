@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="description" content="托福核心词汇词卡、测验与复习小程序" />
+    <meta name="theme-color" content="#1f6d64" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="托福词汇" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <title>托福核心词汇</title>
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" href="./icons/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">TOEFL Core</p>
+          <h1>托福核心词汇</h1>
+        </div>
+        <section class="stats" aria-label="学习统计">
+          <div>
+            <span id="knownCount">0</span>
+            <small>掌握</small>
+          </div>
+          <div>
+            <span id="dueCount">0</span>
+            <small>今日</small>
+          </div>
+          <div>
+            <span id="accuracy">0%</span>
+            <small>正确率</small>
+          </div>
+        </section>
+      </header>
+
+      <section class="toolbar" aria-label="学习工具">
+        <div class="tabs" role="tablist" aria-label="模式">
+          <button class="tab active" data-view="cards" type="button">词卡</button>
+          <button class="tab" data-view="quiz" type="button">测验</button>
+          <button class="tab" data-view="review" type="button">复习</button>
+        </div>
+        <label class="search-box">
+          <span>搜索</span>
+          <input id="searchInput" type="search" placeholder="单词 / 中文 / 主题" />
+        </label>
+        <label class="select-box">
+          <span>主题</span>
+          <select id="tagFilter"></select>
+        </label>
+      </section>
+
+      <section class="view active" id="cardsView" aria-label="词卡模式">
+        <div class="study-grid">
+          <section class="word-panel" aria-live="polite">
+            <div class="card-topline">
+              <span id="wordTag" class="tag">Academic</span>
+              <span id="wordPosition" class="position">1 / 100</span>
+            </div>
+            <button id="flashcard" class="flashcard" type="button" aria-label="翻转词卡">
+              <span id="wordText" class="word">abandon</span>
+              <span id="phoneticText" class="phonetic">/əˈbændən/</span>
+              <span id="posText" class="pos">v.</span>
+              <span id="definitionText" class="definition hidden">放弃；遗弃</span>
+              <span id="exampleText" class="example hidden">The settlers had to abandon the site after the flood.</span>
+            </button>
+            <div class="card-actions">
+              <button id="prevBtn" class="icon-button" type="button" title="上一个" aria-label="上一个">‹</button>
+              <button id="speakBtn" class="action-button" type="button">发音</button>
+              <button id="favoriteBtn" class="action-button ghost" type="button">收藏</button>
+              <button id="nextBtn" class="icon-button" type="button" title="下一个" aria-label="下一个">›</button>
+            </div>
+            <div class="grade-actions">
+              <button id="hardBtn" class="grade hard" type="button">模糊</button>
+              <button id="knowBtn" class="grade know" type="button">认识</button>
+            </div>
+          </section>
+
+          <aside class="side-panel">
+            <div class="progress-block">
+              <div class="ring" id="progressRing" aria-label="学习进度">
+                <span id="progressPercent">0%</span>
+              </div>
+              <div>
+                <h2>今日队列</h2>
+                <p id="queueText">100 个词待学习</p>
+              </div>
+            </div>
+            <div class="mini-map" aria-hidden="true">
+              <span style="--x: 9%; --y: 20%; --c: #2f6f68">infer</span>
+              <span style="--x: 54%; --y: 16%; --c: #8d5a2b">valid</span>
+              <span style="--x: 23%; --y: 60%; --c: #335c81">derive</span>
+              <span style="--x: 69%; --y: 55%; --c: #8b3a50">retain</span>
+              <span style="--x: 43%; --y: 77%; --c: #4b5f30">sustain</span>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="view" id="quizView" aria-label="测验模式">
+        <section class="quiz-panel">
+          <div class="quiz-head">
+            <div>
+              <p class="eyebrow">Quiz</p>
+              <h2 id="quizWord">abandon</h2>
+            </div>
+            <span id="quizScore" class="score-pill">0 / 0</span>
+          </div>
+          <div id="quizOptions" class="quiz-options"></div>
+          <p id="quizFeedback" class="quiz-feedback" aria-live="polite"></p>
+          <button id="nextQuizBtn" class="primary-button" type="button">下一题</button>
+        </section>
+      </section>
+
+      <section class="view" id="reviewView" aria-label="复习模式">
+        <section class="review-layout">
+          <div class="review-panel">
+            <div class="review-head">
+              <h2>复习队列</h2>
+              <button id="resetBtn" class="action-button ghost danger" type="button">重置记录</button>
+            </div>
+            <div id="reviewList" class="review-list"></div>
+          </div>
+          <div class="review-panel">
+            <h2>词库</h2>
+            <div id="wordList" class="word-list"></div>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

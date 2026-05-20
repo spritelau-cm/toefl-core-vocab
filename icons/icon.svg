@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="托福词汇">
+  <rect width="512" height="512" rx="112" fill="#1f6d64" />
+  <path d="M116 140h280a34 34 0 0 1 34 34v164a34 34 0 0 1-34 34H116a34 34 0 0 1-34-34V174a34 34 0 0 1 34-34Z" fill="#f7f4ee" />
+  <path d="M132 180h248M132 228h188M132 276h220" stroke="#1f6d64" stroke-width="24" stroke-linecap="round" />
+  <circle cx="372" cy="286" r="54" fill="#9b3d55" />
+  <path d="M352 287l18 18 32-42" fill="none" stroke="#fff" stroke-width="18" stroke-linecap="round" stroke-linejoin="round" />
+  <text x="256" y="444" text-anchor="middle" font-family="Arial, sans-serif" font-size="68" font-weight="800" fill="#f7f4ee">TOEFL</text>
+</svg>
