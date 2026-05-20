@@ -212,6 +212,13 @@ select {
   color: var(--muted);
 }
 
+.meta-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
 .tag,
 .position,
 .pos,
@@ -221,6 +228,10 @@ select {
 
 .tag {
   color: var(--teal);
+}
+
+.muted-tag {
+  color: var(--muted);
 }
 
 .flashcard {
@@ -284,6 +295,7 @@ select {
 }
 
 .card-actions,
+.study-actions,
 .grade-actions {
   display: grid;
   gap: 10px;
@@ -298,11 +310,17 @@ select {
   grid-template-columns: 1fr 1fr;
 }
 
+.study-actions {
+  grid-template-columns: minmax(150px, 1fr) auto;
+  align-items: center;
+}
+
 .icon-button,
 .action-button,
 .grade,
 .primary-button,
-.quiz-option {
+.quiz-option,
+.study-count-button {
   min-height: 48px;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -354,6 +372,19 @@ select {
   width: 100%;
   color: #fff;
   border: 0;
+}
+
+.count-pill {
+  display: inline-grid;
+  place-items: center;
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-strong);
+  color: var(--teal-dark);
+  font-weight: 850;
+  white-space: nowrap;
 }
 
 .side-panel {
@@ -475,7 +506,7 @@ select {
 
 .review-layout {
   display: grid;
-  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 0.95fr) minmax(0, 1.15fr);
   gap: 16px;
 }
 
@@ -503,24 +534,59 @@ select {
 
 .word-row {
   display: grid;
-  grid-template-columns: minmax(100px, 0.35fr) minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+}
+
+.word-row-main {
+  display: grid;
+  grid-template-columns: minmax(110px, 0.34fr) minmax(0, 1fr) auto;
   gap: 12px;
   align-items: center;
   width: 100%;
+  min-height: 58px;
   padding: 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #fff;
+  color: var(--ink);
   text-align: left;
+}
+
+.word-row-main:hover,
+.study-count-button:hover {
+  border-color: var(--teal);
+}
+
+.word-row strong,
+.word-row small {
+  display: block;
 }
 
 .word-row strong {
   overflow-wrap: anywhere;
 }
 
+.word-row small {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 750;
+  line-height: 1.25;
+}
+
 .word-row span {
   color: var(--muted);
   line-height: 1.45;
+}
+
+.study-count-button {
+  min-width: 86px;
+  padding: 0 10px;
+  color: var(--teal-dark);
+  background: var(--surface-strong);
 }
 
 .badge {
@@ -595,7 +661,12 @@ select {
     grid-template-columns: 46px 1fr 1fr 46px;
   }
 
+  .study-actions,
   .word-row {
+    grid-template-columns: 1fr;
+  }
+
+  .word-row-main {
     grid-template-columns: 1fr;
   }
 }

@@ -1,4 +1,4 @@
-const cacheName = "toefl-core-v3";
+const cacheName = "toefl-core-v4";
 const assets = [
   "./",
   "./index.html",

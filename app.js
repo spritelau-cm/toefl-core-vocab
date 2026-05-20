@@ -101,6 +101,39 @@ const words = [
   { word: "vary", phonetic: "/ˈveri/", pos: "v.", cn: "变化；不同", en: "to be different or change", example: "Rainfall patterns vary from region to region.", tag: "变化" }
 ];
 
+const wordFamilies = [
+  { label: "ab-/abs- 分离", words: ["abandon", "abstract"] },
+  { label: "ad-/ac- 靠近", words: ["adapt", "adequate", "adjacent", "advocate", "accommodate", "accumulate", "accurate"] },
+  { label: "aesth/art 艺术", words: ["aesthetic", "elaborate", "contemporary", "conventional"] },
+  { label: "alter/var/vers 变化", words: ["alter", "convert", "diverse", "expand", "enhance", "transform", "vary"] },
+  { label: "anal/empir 证据", words: ["analyze", "empirical", "evident", "hypothesis", "interpret", "method", "principle", "fundamental", "establish"] },
+  { label: "estim/assess 衡量", words: ["assess", "estimate", "significant", "crucial", "random"] },
+  { label: "logic 推理", words: ["arbitrary", "attribute", "coherent", "contradict", "derive", "imply", "infer", "inevitable", "offset", "plausible", "valid", "source"] },
+  { label: "spec/sign 辨明", words: ["ambiguous", "distinct", "specify", "intrinsic", "instance"] },
+  { label: "part/struct 组成", words: ["aggregate", "compile", "component", "complement", "comprehensive", "concentration", "integrate", "proportion", "sequence"] },
+  { label: "fac/hibit 推动", words: ["facilitate", "inhibit", "prohibit", "promote", "reinforce"] },
+  { label: "ten/tain 保持", words: ["maintain", "retain", "sustain", "stable", "sufficient"] },
+  { label: "tempo 顺序", words: ["anticipate", "coincide", "occur", "persist", "precede", "subsequent"] },
+  { label: "act/manage 行动", words: ["implement", "manipulate", "exploit", "pursue", "rely", "resolve", "cultivate"] },
+  { label: "bio/nature 自然", words: ["abundant", "decline", "diminish", "dominant", "fluctuate", "phenomenon", "release", "isolate", "simulate"] },
+  { label: "soc/pers 观点", words: ["assert", "controversy", "impact", "incentive", "perceive", "perspective", "reluctant", "strategy"] }
+];
+
+const familyByWord = new Map();
+const familyOrderByWord = new Map();
+wordFamilies.forEach((family, familyIndex) => {
+  family.words.forEach((word, wordIndex) => {
+    familyByWord.set(word, family.label);
+    familyOrderByWord.set(word, familyIndex * 100 + wordIndex);
+  });
+});
+
+const studyWords = [...words].sort((a, b) => {
+  const rankA = familyOrderByWord.get(a.word) ?? 9999;
+  const rankB = familyOrderByWord.get(b.word) ?? 9999;
+  return rankA - rankB || a.word.localeCompare(b.word);
+});
+
 const storageKey = "toefl-core-progress-v1";
 const $ = (id) => document.getElementById(id);
 
@@ -110,6 +143,7 @@ const state = {
   revealed: false,
   query: "",
   tag: "全部",
+  selectedWord: null,
   quiz: null,
   progress: loadProgress()
 };
@@ -134,52 +168,73 @@ function todayStamp() {
 
 function entry(word) {
   if (!state.progress[word]) {
-    state.progress[word] = { box: 0, correct: 0, wrong: 0, favorite: false, due: todayStamp() };
+    state.progress[word] = { box: 0, correct: 0, wrong: 0, favorite: false, due: todayStamp(), studyCount: 0, mastered: false };
   }
+  const record = state.progress[word];
+  record.box = Number.isFinite(record.box) ? record.box : 0;
+  record.correct = Number.isFinite(record.correct) ? record.correct : 0;
+  record.wrong = Number.isFinite(record.wrong) ? record.wrong : 0;
+  record.studyCount = Number.isFinite(record.studyCount) ? record.studyCount : 0;
+  record.favorite = Boolean(record.favorite);
+  record.mastered = Boolean(record.mastered || record.box >= 4);
+  record.due = Number.isFinite(record.due) ? record.due : todayStamp();
   return state.progress[word];
+}
+
+function wordFamily(item) {
+  return familyByWord.get(item.word) || `${item.tag}主题`;
 }
 
 function filteredWords() {
   const query = state.query.trim().toLowerCase();
-  return words.filter((item) => {
+  return studyWords.filter((item) => {
     const tagMatch = state.tag === "全部" || item.tag === state.tag;
-    const text = `${item.word} ${item.cn} ${item.en} ${item.tag}`.toLowerCase();
+    const text = `${item.word} ${item.cn} ${item.en} ${item.tag} ${wordFamily(item)}`.toLowerCase();
     return tagMatch && (!query || text.includes(query));
   });
 }
 
-function currentWord() {
+function rollingWords() {
   const list = filteredWords();
+  const active = list.filter((item) => !entry(item.word).mastered);
+  return active.length ? active : list;
+}
+
+function currentWord() {
+  if (state.selectedWord) {
+    return studyWords.find((item) => item.word === state.selectedWord) || null;
+  }
+  const list = rollingWords();
   if (!list.length) return null;
   state.index = (state.index + list.length) % list.length;
   return list[state.index];
 }
 
 function renderTags() {
-  const tags = ["全部", ...new Set(words.map((item) => item.tag))].sort((a, b) => (a === "全部" ? -1 : b === "全部" ? 1 : a.localeCompare(b, "zh-CN")));
+  const tags = ["全部", ...new Set(studyWords.map((item) => item.tag))].sort((a, b) => (a === "全部" ? -1 : b === "全部" ? 1 : a.localeCompare(b, "zh-CN")));
   $("tagFilter").innerHTML = tags.map((tag) => `<option value="${tag}">${tag}</option>`).join("");
 }
 
 function renderStats() {
-  const values = Object.values(state.progress);
-  const known = values.filter((item) => item.box >= 4).length;
-  const due = words.filter((item) => entry(item.word).due <= todayStamp()).length;
+  const values = studyWords.map((item) => entry(item.word));
+  const known = studyWords.filter((item) => entry(item.word).mastered).length;
+  const rolling = studyWords.length - known;
   const correct = values.reduce((sum, item) => sum + item.correct, 0);
   const wrong = values.reduce((sum, item) => sum + item.wrong, 0);
   const accuracy = correct + wrong ? Math.round((correct / (correct + wrong)) * 100) : 0;
-  const percent = Math.round((known / words.length) * 100);
+  const percent = Math.round((known / studyWords.length) * 100);
 
   $("knownCount").textContent = known;
-  $("dueCount").textContent = due;
+  $("dueCount").textContent = rolling;
   $("accuracy").textContent = `${accuracy}%`;
   $("progressPercent").textContent = `${percent}%`;
   $("progressRing").style.setProperty("--progress", `${percent}%`);
-  $("queueText").textContent = `${due} 个词到期，${words.length - known} 个词待掌握`;
+  $("queueText").textContent = `${rolling} 个词滚动学习，${known} 个词已学会`;
 }
 
 function renderCard() {
   const item = currentWord();
-  const list = filteredWords();
+  const list = rollingWords();
   if (!item) {
     $("wordText").textContent = "No match";
     $("phoneticText").textContent = "";
@@ -187,29 +242,36 @@ function renderCard() {
     $("definitionText").textContent = "没有匹配的词";
     $("exampleText").textContent = "";
     $("wordTag").textContent = "空";
+    $("wordFamily").textContent = "无匹配";
+    $("studyCountText").textContent = "已学 0 次";
     $("wordPosition").textContent = "0 / 0";
     return;
   }
 
+  const record = entry(item.word);
+  const positionIndex = state.selectedWord ? list.findIndex((word) => word.word === item.word) : state.index;
   $("wordText").textContent = item.word;
   $("phoneticText").textContent = item.phonetic;
   $("posText").textContent = item.pos;
   $("definitionText").textContent = item.cn;
   $("exampleText").textContent = item.example;
   $("wordTag").textContent = item.tag;
-  $("wordPosition").textContent = `${state.index + 1} / ${list.length}`;
+  $("wordFamily").textContent = wordFamily(item);
+  $("studyCountText").textContent = `已学 ${record.studyCount} 次`;
+  $("wordPosition").textContent = positionIndex >= 0 ? `${positionIndex + 1} / ${list.length}` : "已学会";
 
   $("definitionText").classList.toggle("hidden", !state.revealed);
   $("exampleText").classList.toggle("hidden", !state.revealed);
-  $("favoriteBtn").classList.toggle("active", entry(item.word).favorite);
-  $("favoriteBtn").textContent = entry(item.word).favorite ? "已收藏" : "收藏";
+  $("favoriteBtn").classList.toggle("active", record.favorite);
+  $("favoriteBtn").textContent = record.favorite ? "已收藏" : "收藏";
 
   renderStats();
   renderLists();
 }
 
 function moveCard(step) {
-  const list = filteredWords();
+  state.selectedWord = null;
+  const list = rollingWords();
   if (!list.length) return;
   state.index = (state.index + step + list.length) % list.length;
   state.revealed = false;
@@ -220,17 +282,31 @@ function gradeCurrent(correct) {
   const item = currentWord();
   if (!item) return;
   const record = entry(item.word);
+  recordStudy(item.word);
   if (correct) {
     record.correct += 1;
-    record.box = Math.min(5, record.box + 1);
+    markMastered(record);
   } else {
     record.wrong += 1;
     record.box = Math.max(0, record.box - 1);
+    record.mastered = false;
+    record.due = todayStamp();
   }
-  const intervals = [0, 1, 2, 4, 8, 16];
-  record.due = todayStamp() + intervals[record.box] * 86400000;
   saveProgress();
   moveCard(1);
+}
+
+function recordStudy(word) {
+  const record = entry(word);
+  record.studyCount += 1;
+  record.lastStudied = Date.now();
+  saveProgress();
+}
+
+function markMastered(record) {
+  record.mastered = true;
+  record.box = 5;
+  record.due = todayStamp() + 365 * 86400000;
 }
 
 function speakCurrent() {
@@ -245,9 +321,10 @@ function speakCurrent() {
 
 function makeQuiz() {
   const pool = filteredWords();
-  const list = pool.length >= 4 ? pool : words;
+  const activePool = pool.filter((item) => !entry(item.word).mastered);
+  const list = activePool.length ? activePool : pool.length ? pool : studyWords;
   const answer = list[Math.floor(Math.random() * list.length)];
-  const distractors = words
+  const distractors = studyWords
     .filter((item) => item.word !== answer.word)
     .sort(() => Math.random() - 0.5)
     .slice(0, 3);
@@ -263,11 +340,11 @@ function renderQuiz() {
   if (!state.quiz) makeQuiz();
   const quiz = state.quiz;
   $("quizWord").textContent = quiz.answer.word;
-  const values = Object.values(state.progress);
+  const values = studyWords.map((item) => entry(item.word));
   const correct = values.reduce((sum, item) => sum + item.correct, 0);
   const wrong = values.reduce((sum, item) => sum + item.wrong, 0);
   $("quizScore").textContent = `${correct} / ${correct + wrong}`;
-  $("quizFeedback").textContent = quiz.chosen ? `${quiz.answer.word}: ${quiz.answer.en}` : "";
+  $("quizFeedback").textContent = quiz.feedback || (quiz.chosen ? `${quiz.answer.word}: ${quiz.answer.en}` : "");
   $("quizOptions").innerHTML = quiz.options
     .map((option) => {
       const chosen = quiz.chosen === option.word;
@@ -284,19 +361,17 @@ function chooseQuiz(word) {
   quiz.chosen = word;
   const record = entry(quiz.answer.word);
   const correct = word === quiz.answer.word;
+  recordStudy(quiz.answer.word);
   if (correct) {
     record.correct += 1;
-    record.box = Math.min(5, record.box + 1);
-    $("quizFeedback").textContent = "答对了";
+    markMastered(record);
+    quiz.feedback = `答对了，${quiz.answer.word} 已进入“已学会”列表`;
   } else {
     record.wrong += 1;
     record.box = Math.max(0, record.box - 1);
+    record.mastered = false;
     record.due = todayStamp();
-    $("quizFeedback").textContent = `答案：${quiz.answer.cn}`;
-  }
-  if (correct) {
-    const intervals = [0, 1, 2, 4, 8, 16];
-    record.due = todayStamp() + intervals[record.box] * 86400000;
+    quiz.feedback = `继续滚动学习。答案：${quiz.answer.cn}`;
   }
   saveProgress();
   renderQuiz();
@@ -305,22 +380,23 @@ function chooseQuiz(word) {
 }
 
 function rowTemplate(item, record) {
-  const status = record.box >= 4 ? "熟" : record.wrong ? "错" : record.favorite ? "藏" : item.tag;
+  const status = record.mastered ? "已会" : record.wrong ? "继续" : record.favorite ? "收藏" : "待学";
   return `
-    <button class="word-row" type="button" data-select-word="${item.word}">
-      <strong>${item.word}</strong>
-      <span>${item.cn}</span>
-      <em class="badge">${status}</em>
-    </button>
+    <div class="word-row">
+      <button class="word-row-main" type="button" data-select-word="${item.word}">
+        <strong>${item.word}<small>${wordFamily(item)}</small></strong>
+        <span>${item.cn}</span>
+        <em class="badge">${status}</em>
+      </button>
+      <button class="study-count-button" type="button" data-study-word="${item.word}">学 ${record.studyCount} 次</button>
+    </div>
   `;
 }
 
 function renderLists() {
   const visible = filteredWords();
-  const reviewItems = words.filter((item) => {
-    const record = entry(item.word);
-    return record.wrong > 0 || record.favorite || record.due <= todayStamp();
-  });
+  const reviewItems = visible.filter((item) => !entry(item.word).mastered);
+  const masteredItems = visible.filter((item) => entry(item.word).mastered);
 
   $("wordList").innerHTML = visible.length
     ? visible.map((item) => rowTemplate(item, entry(item.word))).join("")
@@ -328,20 +404,21 @@ function renderLists() {
 
   $("reviewList").innerHTML = reviewItems.length
     ? reviewItems.map((item) => rowTemplate(item, entry(item.word))).join("")
-    : '<div class="empty-state">今天没有错词，继续保持</div>';
+    : '<div class="empty-state">当前筛选下没有待学词</div>';
+
+  $("masteredList").innerHTML = masteredItems.length
+    ? masteredItems.map((item) => rowTemplate(item, entry(item.word))).join("")
+    : '<div class="empty-state">答对测验或点“认识”后会进入这里</div>';
 }
 
 function selectWord(word) {
-  const list = filteredWords();
+  const list = rollingWords();
   const idx = list.findIndex((item) => item.word === word);
   if (idx >= 0) {
     state.index = idx;
+    state.selectedWord = null;
   } else {
-    state.tag = "全部";
-    $("tagFilter").value = "全部";
-    state.query = "";
-    $("searchInput").value = "";
-    state.index = words.findIndex((item) => item.word === word);
+    state.selectedWord = word;
   }
   state.revealed = true;
   setView("cards");
@@ -367,6 +444,7 @@ function bindEvents() {
     state.query = event.target.value;
     state.index = 0;
     state.revealed = false;
+    state.selectedWord = null;
     state.quiz = null;
     renderCard();
     if (state.view === "quiz") makeQuiz();
@@ -376,6 +454,7 @@ function bindEvents() {
     state.tag = event.target.value;
     state.index = 0;
     state.revealed = false;
+    state.selectedWord = null;
     state.quiz = null;
     renderCard();
     if (state.view === "quiz") makeQuiz();
@@ -389,6 +468,12 @@ function bindEvents() {
   $("prevBtn").addEventListener("click", () => moveCard(-1));
   $("nextBtn").addEventListener("click", () => moveCard(1));
   $("speakBtn").addEventListener("click", speakCurrent);
+  $("studyBtn").addEventListener("click", () => {
+    const item = currentWord();
+    if (!item) return;
+    recordStudy(item.word);
+    renderCard();
+  });
   $("hardBtn").addEventListener("click", () => gradeCurrent(false));
   $("knowBtn").addEventListener("click", () => gradeCurrent(true));
 
@@ -409,6 +494,12 @@ function bindEvents() {
   $("nextQuizBtn").addEventListener("click", makeQuiz);
 
   document.body.addEventListener("click", (event) => {
+    const studyButton = event.target.closest("[data-study-word]");
+    if (studyButton) {
+      recordStudy(studyButton.dataset.studyWord);
+      renderCard();
+      return;
+    }
     const button = event.target.closest("[data-select-word]");
     if (button) selectWord(button.dataset.selectWord);
   });
@@ -416,6 +507,7 @@ function bindEvents() {
   $("resetBtn").addEventListener("click", () => {
     if (!confirm("确定要清空学习记录吗？")) return;
     state.progress = {};
+    state.selectedWord = null;
     saveProgress();
     renderCard();
     makeQuiz();
